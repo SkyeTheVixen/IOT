@@ -1,13 +1,19 @@
 const express = require('express');
+const { Server } = require("socket.io");
 const fs = require('fs');
 const ejs = require('ejs');
 const mariadb = require('mariadb');
 const app = express();
+const http = require('http');
 const port = process.env.PORT || 8080;
 const dbuser = process.env.DBUSER;
 const dbpass = process.env.DBPASS;
 const dbhost = process.env.DBHOST;
 const envkey = process.env.APIKEY;
+var connectedUsers = 0;
+const server = http.createServer(app);
+
+const io = new Server(server);
 
 const pool = mariadb.createPool({
     host: dbhost,
@@ -45,9 +51,13 @@ app.post('/v1/data/log', (req, res) => {
         const {tempInternal, tempExternal} = req.body;
         pool.getConnection()
             .then(conn => {
-                conn.query(`INSERT INTO \`data\` (\`id\`, \`tempInternal\`, \`tempExternal\`) VALUES (NULL, ${tempInternal}, ${tempExternal});`);    
+                conn.query(`INSERT INTO \`data\` (\`id\`, \`tempInternal\`, \`tempExternal\`) VALUES (NULL, ${tempInternal}, ${tempExternal});`).then(() => {
+                    io.sockets.emit("data", {tempInternal: tempInternal, tempExternal: tempExternal});
+                }).catch(err => {
+                    res.status(401).send({"message":"conn lost"});
+                });
             }).catch(err => {
-            //not connected
+            res.status(401).send({"message":"conn lost"});
             });
         res.status(200).send({"message": "data logged"});
     } else {
@@ -55,6 +65,68 @@ app.post('/v1/data/log', (req, res) => {
     }
 });
 
-app.listen(port, () => {
-  console.log(`Weather Station API listening at http://:${port}`);
+server.listen(port, () => {
+  console.log(`Weather Station API listening at http://*:${port}`);
 });
+
+io.on('connection', (socket) => {
+    connectedUsers++;
+    console.log('a user connected');
+    socket.on('mode', (data) => {
+        sendButtonEvent(data);
+    });
+    socket.on('windows', (data) => {
+        console.log(data);
+    });
+});
+
+io.on('disconnect', (socket) => {
+    connectedUsers--;
+    console.log('a user disconnected');
+});
+
+
+
+async function sendButtonEvent(mode){
+    var rp = require('request-promise');
+
+    var options = {
+        method: 'POST',
+        url: 'https://api2.arduino.cc/iot/v1/clients/token',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        json: true,
+        form: {
+            grant_type: 'client_credentials',
+            client_id: 'wwy9uQz16szBdzdkCUHZ2KERHTUlg5pE',
+            client_secret: '2F2fpRXorIuyxWUqMeubZcguOSycLy7PQuk1b3w3ZN7q1s2lPmhrIsWAWJgBhYNh',
+            audience: 'https://api2.arduino.cc/iot'
+        }
+    };
+    var access = "";
+    try {
+        const response = await rp(options);
+        access = response['access_token'];
+    }
+    catch (error) {
+        console.error("Failed getting an access token: " + error)
+    }
+
+    var ArduinoIotClient = require('@arduino/arduino-iot-client');
+    var defaultClient = ArduinoIotClient.ApiClient.instance;
+    
+    // Configure OAuth2 access token for authorization: oauth2
+    var oauth2 = defaultClient.authentications['oauth2'];
+    oauth2.accessToken = access;
+    
+    var api = new ArduinoIotClient.PropertiesV2Api()
+    var id = "f43bbd2d-14a4-4b66-8cb4-ad8140c7c4eb"; // {String} The id of the thing
+    var pid = "b0851198-c8ad-469d-bef5-fddc1768e516"; // {String} The id of the property
+    mode == "heating" ? mode = 2 : (mode == "cooling" ? mode = 0 : mode = 1);
+    mode = parseInt(mode);
+    var propertyValue = {device_id: "2e0322e3-3b48-4905-8872-079d59aad442", value: mode}; // {PropertyValue} 
+    api.propertiesV2Publish(id, pid, propertyValue).then(function() {
+      console.log('API called successfully.');
+    }, function(error) {
+      console.error(error);
+    });
+}

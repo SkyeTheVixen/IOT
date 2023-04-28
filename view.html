@@ -7,23 +7,100 @@
         <title>WS255237 Weather</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+        <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro-v6@44659d9/css/all.min.css" rel="stylesheet" type="text/css" />
     </head>
 
     <body>
         <div class="container">
-            <div class="min-vh-100 d-flex flex-row mx-5 justify-content-center align-items-center">
-                <div class="d-flex flex-column me-5 px-5 text-center">
-                    <h1>Internal Temperature</h1>
-                    <h3><%= internal_temp %></h3>
+            <div class="min-vh-100 d-flex flex-column mx-5 justify-content-center align-items-center">
+                <div class="d-flex flex-row mb-5">
+                    <div class="d-flex flex-column me-5 px-5 text-center">
+                        <h3>Internal</h3>
+                        <h1 id="internal_temp"><%= internal_temp %>°c</h1>
+                    </div>
+                    <div class="d-flex flex-column ms-5 px-5 text-center">
+                        <h3>External</h3>
+                        <h1 id="external_temp"><%= external_temp %>°c</h1>
+                    </div>        
                 </div>
-                <div class="d-flex flex-column ms-5 px-5 text-center">
-                    <h1>External Temperature</h1>
-                    <h3><%= external_temp %></h3>
+                <div class="row mt-5">
+                    <div class="d-flex flex-row text-center icons">
+                        <a href="#" class="link-light mx-3 border border-success border-danger border-5 bg-light" id="cooling" title="Cooling"><h2><i class="p-4 fas fa-snowflake text-bg-light"></i></h2></a>
+                        <a href="#" class="link-light mx-3 border border-success border-5" id="heating" title="Heating"><h2><i class="p-4 fas fa-sun"></i></h2></a>
+                        <a href="#" class="link-light mx-3 border border-success border-5" id="ventilation" title="Ventilation"><h2><i class="p-4 fas fa-wind"></i></h2></a>
+                        <a href="#" class="link-light mx-3 border border-success border-5" id="Windows" title="Windows"><h2><i class="p-4 fas fa-window-frame"></i></h2></a>
+                    </div>
                 </div>
             </div>
+
         </div>
 
         <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+        <script>
+            var windows = 0;
+            var socket = io();
+            socket.on('disconnect', (reason) => {
+                console.log('disconnected ' + reason);
+            });
+
+            socket.on("data", (data) => {
+                console.log(data);
+                $("#internal_temp").html(data.tempInternal + "°c");
+                $("#external_temp").html(data.tempExternal + "°c");
+            });
+
+            $("#cooling").click(function(){
+                $("#heating").removeClass("bg-light");
+                $("#heating").find('i').removeClass("text-bg-light");
+                $("#heating").removeClass("border-danger");
+                $("#ventilation").removeClass("bg-light");
+                $("#ventilation").find('i').removeClass("text-bg-light");
+                $("#ventilation").removeClass("border-danger");
+                $(this).addClass("bg-light");
+                $(this).find("i").addClass("text-bg-light");
+                $(this).toggleClass("border-danger");
+
+                socket.emit("mode", "cooling");
+            });
+
+            $("#heating").click(function(){
+                $("#cooling").removeClass("bg-light");
+                $("#cooling").find('i').removeClass("text-bg-light");
+                $("#cooling").removeClass("border-danger");
+                $("#ventilation").removeClass("bg-light");
+                $("#ventilation").find('i').removeClass("text-bg-light");
+                $("#ventilation").removeClass("border-danger");
+                $(this).addClass("bg-light");
+                $(this).find("i").addClass("text-bg-light");
+                $(this).addClass("border-danger");
+
+                socket.emit("mode", "heating");
+            });
+
+            $("#ventilation").click(function(){
+                $("#cooling").removeClass("bg-light");
+                $("#cooling").find('i').removeClass("text-bg-light");
+                $("#cooling").removeClass("border-danger");
+                $("#heating").removeClass("bg-light");
+                $("#heating").find('i').removeClass("text-bg-light");
+                $("#heating").removeClass("border-danger");
+                $(this).addClass("bg-light");
+                $(this).find("i").addClass("text-bg-light");
+                $(this).addClass("border-danger");
+
+                socket.emit("mode", "ventilation");
+            });
+
+            $("#Windows").click(function(){
+                $(this).toggleClass("bg-light");
+                $(this).find("i").toggleClass("text-bg-light");
+                $(this).toggleClass("border-danger");
+                windows == 1 ? windows = 0 : windows = 1;
+                socket.emit("windows", windows);
+            });
+
+        </script>
     </body>
 </html>
