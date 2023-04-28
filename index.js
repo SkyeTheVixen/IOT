@@ -122,7 +122,7 @@ async function sendButtonEvent(mode){
     var api = new ArduinoIotClient.PropertiesV2Api()
     var id = "f43bbd2d-14a4-4b66-8cb4-ad8140c7c4eb"; // {String} The id of the thing
     var pid = "b0851198-c8ad-469d-bef5-fddc1768e516"; // {String} The id of the property
-    mode == "heating" ? mode = 2 : (mode == "cooling" ? mode = 0 : mode = 1);
+    mode == "heating" ? mode = 1 : (mode == "cooling" ? mode = 0 : mode = 2);
     mode = parseInt(mode);
     var propertyValue = {device_id: "2e0322e3-3b48-4905-8872-079d59aad442", value: mode}; // {PropertyValue} 
     api.propertiesV2Publish(id, pid, propertyValue).then(function() {
