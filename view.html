@@ -21,6 +21,10 @@
                     <div class="d-flex flex-column ms-5 px-5 text-center">
                         <h3>External</h3>
                         <h1 id="external_temp"><%= external_temp %>°c</h1>
+                    </div>   
+                    <div class="d-flex flex-column ms-5 px-5 text-center">
+                        <h3>Weather</h3>
+                        <h1 id="weather_temp"><%= weather_temp %>°c</h1>
                     </div>        
                 </div>
                 <div class="row mt-5">
@@ -49,6 +53,7 @@
                 console.log(data);
                 $("#internal_temp").html(data.tempInternal + "°c");
                 $("#external_temp").html(data.tempExternal + "°c");
+                $("#weather_temp").html(data.tempWeather + "°c");
             });
 
             $("#cooling").click(function(){

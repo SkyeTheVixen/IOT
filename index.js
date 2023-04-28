@@ -36,7 +36,8 @@ app.get('/', (req, res) => {
                     // Render the file with the data
                     const html = ejs.render(file, {
                       internal_temp: rows[0].tempInternal,
-                      external_temp: rows[0].tempExternal
+                      external_temp: rows[0].tempExternal,
+                      weather_temp: rows[0].tempWeather
                     });
                     res.send(html);
                 });
