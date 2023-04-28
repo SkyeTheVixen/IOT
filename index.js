@@ -49,11 +49,11 @@ app.get('/', (req, res) => {
 app.post('/v1/data/log', (req, res) => {
     const {apikey} = req.headers;
     if(apikey === envkey){
-        const {tempInternal, tempExternal} = req.body;
+        const {tempInternal, tempExternal, tempWeather} = req.body;
         pool.getConnection()
             .then(conn => {
-                conn.query(`INSERT INTO \`data\` (\`id\`, \`tempInternal\`, \`tempExternal\`) VALUES (NULL, ${tempInternal}, ${tempExternal});`).then(() => {
-                    io.sockets.emit("data", {tempInternal: tempInternal, tempExternal: tempExternal});
+                conn.query(`INSERT INTO \`data\` (\`id\`, \`tempInternal\`, \`tempExternal\`, \`tempWeather\`) VALUES (NULL, ${tempInternal}, ${tempExternal}, ${tempWeather});`).then(() => {
+                    io.sockets.emit("data", {tempInternal: tempInternal, tempExternal: tempExternal, tempWeather: tempWeather});
                 }).catch(err => {
                     res.status(401).send({"message":"conn lost"});
                 });
