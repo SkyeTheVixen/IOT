@@ -5,6 +5,7 @@ const ejs = require('ejs');
 const mariadb = require('mariadb');
 const app = express();
 const http = require('http');
+require('dotenv').config();
 const port = process.env.PORT || 8080;
 const dbuser = process.env.DBUSER;
 const dbpass = process.env.DBPASS;
