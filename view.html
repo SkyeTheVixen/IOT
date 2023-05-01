@@ -11,7 +11,12 @@
     </head>
 
     <body>
-        <div class="container">
+        <div class="container min-vh-100 position-relative">
+            <div class="position-absolute top-0 right-0">
+                <a href="#" class="link-light mx-3 border border-success border-danger border-5" id="history" title="Historical Data"><h2><i class="p-4 fas fa-line-chart"></i></h2></a>
+                <a href="#" class="link-light mx-3 border border-success border-danger border-5" id="settings" title="Settings"><h2><i class="p-4 fas fa-gear"></i></h2></a>
+
+            </div>
             <div class="min-vh-100 d-flex flex-column mx-5 justify-content-center align-items-center">
                 <div class="d-flex flex-row mb-5">
                     <div class="d-flex flex-column me-5 px-5 text-center">
@@ -54,6 +59,47 @@
                 $("#internal_temp").html(data.tempInternal + "°c");
                 $("#external_temp").html(data.tempExternal + "°c");
                 $("#weather_temp").html(data.tempWeather + "°c");
+                if(data.currentMode == 0){
+                    $("#heating").removeClass("bg-light");
+                    $("#heating").find('i').removeClass("text-bg-light");
+                    $("#heating").removeClass("border-danger");
+                    $("#ventilation").removeClass("bg-light");
+                    $("#ventilation").find('i').removeClass("text-bg-light");
+                    $("#ventilation").removeClass("border-danger");
+                    $("#cooling").addClass("bg-light");
+                    $("#cooling").find("i").addClass("text-bg-light");
+                    $("#cooling").toggleClass("border-danger");
+                } else if(data.currentMode == 1){
+                    $("#cooling").removeClass("bg-light");
+                    $("#cooling").find('i').removeClass("text-bg-light");
+                    $("#cooling").removeClass("border-danger");
+                    $("#heating").removeClass("bg-light");
+                    $("#heating").find('i').removeClass("text-bg-light");
+                    $("#heating").removeClass("border-danger");
+                    $("#ventilation").addClass("bg-light");
+                    $("#ventilation").find("i").addClass("text-bg-light");
+                    $("#ventilation").addClass("border-danger");
+                } else if(data.currentMode == 2){
+                    $("#cooling").removeClass("bg-light");
+                    $("#cooling").find('i').removeClass("text-bg-light");
+                    $("#cooling").removeClass("border-danger");
+                    $("#ventilation").removeClass("bg-light");
+                    $("#ventilation").find('i').removeClass("text-bg-light");
+                    $("#ventilation").removeClass("border-danger");
+                    $("#heating").addClass("bg-light");
+                    $("#heating").find("i").addClass("text-bg-light");
+                    $("#heating").addClass("border-danger");
+                } else if(data.currentMode == 3){
+                    $("#cooling").removeClass("bg-light");
+                    $("#cooling").find('i').removeClass("text-bg-light");
+                    $("#cooling").removeClass("border-danger");
+                    $("#ventilation").removeClass("bg-light");
+                    $("#ventilation").find('i').removeClass("text-bg-light");
+                    $("#ventilation").removeClass("border-danger");
+                    $("#heating").removeClass("bg-light");
+                    $("#heating").find('i').removeClass("text-bg-light");
+                    $("#heating").removeClass("border-danger");
+                }
             });
 
             $("#cooling").click(function(){

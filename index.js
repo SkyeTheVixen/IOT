@@ -4,6 +4,7 @@ const fs = require('fs');
 const ejs = require('ejs');
 const mariadb = require('mariadb');
 const app = express();
+var rp = require('request-promise');
 const http = require('http');
 require('dotenv').config();
 const port = process.env.PORT || 8080;
@@ -27,7 +28,7 @@ const pool = mariadb.createPool({
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
     pool.getConnection()
         .then(conn => {
             conn.query(`SELECT * FROM \`data\` ORDER BY \`timestamp\` DESC LIMIT 1;`).then((rows) => {
@@ -47,14 +48,36 @@ app.get('/', (req, res) => {
         });
 });
 
-app.post('/v1/data/log', (req, res) => {
+app.get('/history', async (req, res) => {
+
+    var ArduinoIotClient = require('@arduino/arduino-iot-client');
+
+    var api = new ArduinoIotClient.DashboardsV2Api()
+    var id = "2ea62cb9-b3ad-4a95-a65c-9c6fc0cd3e71"; // {String} The id of the dashboard
+    var opts = {
+        'xOrganization': "Skylar" // {String} 
+    };
+    api.dashboardsV2Show(id, opts).then(function(data) {
+        console.log('API called successfully. Returned data: ' + data);
+    }, function(error) {
+    console.error(error);
+    });
+    
+
+
+});
+
+app.get('/settings', async (req, res) => {
+});
+
+app.post('/v1/data/log', async (req, res) => {
     const {apikey} = req.headers;
     if(apikey === envkey){
-        const {tempInternal, tempExternal, tempWeather} = req.body;
+        const {tempInternal, tempExternal, tempWeather, currentMode} = req.body;
         pool.getConnection()
             .then(conn => {
                 conn.query(`INSERT INTO \`data\` (\`id\`, \`tempInternal\`, \`tempExternal\`, \`tempWeather\`) VALUES (NULL, ${tempInternal}, ${tempExternal}, ${tempWeather});`).then(() => {
-                    io.sockets.emit("data", {tempInternal: tempInternal, tempExternal: tempExternal, tempWeather: tempWeather});
+                    io.sockets.emit("data", {tempInternal: tempInternal, tempExternal: tempExternal, tempWeather: tempWeather, currentMode: currentMode});
                 }).catch(err => {
                     res.status(401).send({"message":"conn lost"});
                 });
@@ -90,8 +113,6 @@ io.on('disconnect', (socket) => {
 
 
 async function sendButtonEvent(mode){
-    var rp = require('request-promise');
-
     var options = {
         method: 'POST',
         url: 'https://api2.arduino.cc/iot/v1/clients/token',
