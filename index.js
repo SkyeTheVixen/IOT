@@ -31,8 +31,11 @@ app.use(express.json());
 app.get('/', async (req, res) => {
     pool.getConnection()
         .then(conn => {
-            conn.query(`SELECT * FROM \`data\` ORDER BY \`timestamp\` DESC LIMIT 1;`).then((rows) => {
-                fs.readFile(__dirname + '/view.html', 'utf8', (err, file) => {
+            conn.query(`SELECT * FROM \`data\` ORDER BY \`timestamp\` DESC LIMIT 1;`).then(async (rows) => {
+                var mode = await getCurrentMode();
+                var fileName = __dirname + '/view' + mode ?? 0;
+                fileName += ".html";
+                fs.readFile(fileName, 'utf8', (err, file) => {
                     if (err) throw err;
                     // Render the file with the data
                     const html = ejs.render(file, {
@@ -62,8 +65,6 @@ app.get('/history', async (req, res) => {
     }, function(error) {
     console.error(error);
     });
-    
-
 
 });
 
@@ -152,4 +153,43 @@ async function sendButtonEvent(mode){
     }, function(error) {
       console.error(error);
     });
+}
+
+async function getCurrentMode(){
+    var options = {
+        method: 'POST',
+        url: 'https://api2.arduino.cc/iot/v1/clients/token',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        json: true,
+        form: {
+            grant_type: 'client_credentials',
+            client_id: 'wwy9uQz16szBdzdkCUHZ2KERHTUlg5pE',
+            client_secret: '2F2fpRXorIuyxWUqMeubZcguOSycLy7PQuk1b3w3ZN7q1s2lPmhrIsWAWJgBhYNh',
+            audience: 'https://api2.arduino.cc/iot'
+        }
+    };
+    var access = "";
+    try {
+        const response = await rp(options);
+        access = response['access_token'];
+    }
+    catch (error) {
+        console.error("Failed getting an access token: " + error)
+    }
+
+    var ArduinoIotClient = require('@arduino/arduino-iot-client');
+    var defaultClient = ArduinoIotClient.ApiClient.instance;
+    
+    // Configure OAuth2 access token for authorization: oauth2
+    var oauth2 = defaultClient.authentications['oauth2'];
+    oauth2.accessToken = access;
+    
+    var api = new ArduinoIotClient.PropertiesV2Api()
+    var id = "f43bbd2d-14a4-4b66-8cb4-ad8140c7c4eb"; // {String} The id of the thing
+    var pid = "b0851198-c8ad-469d-bef5-fddc1768e516"; // {String} The id of the property
+    var opts = {
+        'showDeleted': true // {Boolean} If true, shows the soft deleted properties
+      };
+    var data = await api.propertiesV2Show(id, pid, opts);
+    return data.last_value;
 }
